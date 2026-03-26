@@ -1,66 +1,30 @@
-name: Panda Scratch Daily Perf Check
+name: Panda Performance Check
 
 on:
   schedule:
-    - cron: '0 2 * * *'  # 每天 UTC 2:00 = 北京时间 10:00
-  workflow_dispatch:  # 支持手动触发
+    # 每天北京时间早上 9 点运行（UTC 1:00）
+    - cron: '0 1 * * *'
+  workflow_dispatch: # 支持手动触发
 
 jobs:
   perf-check:
     runs-on: ubuntu-latest
-    
+    timeout-minutes: 60
+
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-      
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-        
-    - name: Run check
-      env:
-        PANDA_EMAIL: ${{ secrets.PANDA_EMAIL }}
-        PANDA_PASSWORD: ${{ secrets.PANDA_PASSWORD }}
-      run: |
-        node daily-check-and-report.js 2>&1 | tee report-output.txt
-                
-    - name: Send to Feishu
-      env:
-        FEISHU_APP_ID: ${{ secrets.FEISHU_APP_ID }}
-        FEISHU_APP_SECRET: ${{ secrets.FEISHU_APP_SECRET }}
-        FEISHU_CHAT_ID: ${{ secrets.FEISHU_CHAT_ID }}
-      run: |
-        # 获取 token
-        TOKEN=$(curl -s -X POST "https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal" \
-          -H "Content-Type: application/json" \
-          -d "{\"app_id\":\"$FEISHU_APP_ID\",\"app_secret\":\"$FEISHU_APP_SECRET\"}" | jq -r '.tenant_access_token')
-        
-        echo "Token: ${TOKEN:0:20}..."
-        
-        # 读取报告内容
-        REPORT=$(cat daily-report.txt)
-        
-        # 使用 jq 构建 JSON
-        CONTENT=$(jq -n --arg text "$REPORT" '{text: $text}')
-        
-        PAYLOAD=$(jq -n \
-          --arg chat_id "$FEISHU_CHAT_ID" \
-          --argjson content "$CONTENT" \
-          '{receive_id: $chat_id, msg_type: "text", content: ($content | tostring)}')
-        
-        echo "Payload:"
-        echo "$PAYLOAD" | jq .
-        
-        # 发送
-        curl -s -X POST "https://open.feishu.cn/open-apis/im/v1/messages?receive_id_type=chat_id" \
-          -H "Authorization: Bearer $TOKEN" \
-          -H "Content-Type: application/json" \
-          -d "$PAYLOAD" | jq -r '.'
-                
-    - name: Upload report
-      uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: daily-report
-        path: daily-report.txt
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install puppeteer lighthouse
+
+      - name: Run performance check
+        env:
+          PANDA_EMAIL: ${{ secrets.PANDA_EMAIL }}
+          PANDA_PASSWORD: ${{ secrets.PANDA_PASSWORD }}
+        run: node panda-auth-perf-api-login.js
