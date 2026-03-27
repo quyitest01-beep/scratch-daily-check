@@ -4,10 +4,21 @@ on:
   schedule:
     - cron: '0 1 * * *'
   workflow_dispatch:
+    inputs:
+      environment:
+        description: '选择运行环境'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - staging
+          - production
 
 jobs:
   staging-check:
     name: 预发布环境 (panda-scratch.com)
+    if: github.event_name == 'schedule' || inputs.environment == 'all' || inputs.environment == 'staging'
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -35,6 +46,7 @@ jobs:
 
   production-check:
     name: 正式环境 (fortuna.fast)
+    if: github.event_name == 'schedule' || inputs.environment == 'all' || inputs.environment == 'production'
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
