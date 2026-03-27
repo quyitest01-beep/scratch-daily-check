@@ -488,7 +488,7 @@ function buildFeishuCard(publicResults, authResults) {
     row_height: 'low',
     header_style: { text_align: 'center', text_size: 'normal', background_style: 'grey', bold: true },
     columns: statsColumns,
-    rows: statsRows.map(r => ({ cells: statsColumns.map(c => ({ text: r[c.name] })) }))
+    rows: statsRows
   });
 
   elements.push({ tag: 'hr' });
@@ -504,10 +504,7 @@ function buildFeishuCard(publicResults, authResults) {
     row_height: 'low',
     header_style: { text_align: 'center', text_size: 'normal', background_style: 'grey', bold: true },
     columns: columns,
-    rows: publicResults.map(r => {
-      const row = buildRow(r);
-      return { cells: columns.map(c => ({ text: row[c.name] })) };
-    })
+    rows: publicResults.map(r => buildRow(r))
   });
 
   elements.push({ tag: 'hr' });
@@ -523,10 +520,7 @@ function buildFeishuCard(publicResults, authResults) {
     row_height: 'low',
     header_style: { text_align: 'center', text_size: 'normal', background_style: 'grey', bold: true },
     columns: columns,
-    rows: authResults.map(r => {
-      const row = buildRow(r);
-      return { cells: columns.map(c => ({ text: row[c.name] })) };
-    })
+    rows: authResults.map(r => buildRow(r))
   });
 
   // 关键问题
