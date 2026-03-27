@@ -2,9 +2,10 @@ name: Panda Performance Check
 
 on:
   schedule:
-    - cron: "0 2 * * *" 
+    # 每天北京时间早上 9 点运行（UTC 1:00）
+    - cron: '0 1 * * *'
   workflow_dispatch:
-  
+
 jobs:
   perf-check:
     runs-on: ubuntu-latest
@@ -18,9 +19,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'npm'
 
       - name: Install dependencies
-        run: npm install puppeteer lighthouse
+        run: npm ci || npm install
 
       - name: Run performance check
         env:
