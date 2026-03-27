@@ -2,7 +2,7 @@ name: Panda Performance Check
 
 on:
   schedule:
-    - cron: '0 1 * * *'
+    - cron: '45 1 * * *'
   workflow_dispatch:
 
 jobs:
