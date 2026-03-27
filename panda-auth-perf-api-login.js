@@ -57,13 +57,14 @@ const AUTH_PAGES = [
 ];
 
 // 性能目标
+// 性能目标（支持环境变量覆盖）
 const TARGETS = {
-  performance: 60,
-  fcp: 2500,
-  lcp: 10500,
-  tbt: 200,
-  cls: 0.1,
-  si: 3400
+  performance: parseInt(process.env.TARGET_PERFORMANCE) || 60,
+  fcp: parseInt(process.env.TARGET_FCP) || 2500,
+  lcp: parseInt(process.env.TARGET_LCP) || 10500,
+  tbt: parseInt(process.env.TARGET_TBT) || 200,
+  cls: parseFloat(process.env.TARGET_CLS) || 0.1,
+  si: parseInt(process.env.TARGET_SI) || 3400
 };
 
 // 调用 Supabase API 登录
@@ -386,7 +387,7 @@ function formatReport(publicResults, authResults) {
 }
 
 // 飞书 Webhook 配置
-const FEISHU_WEBHOOK_URL = 'https://open.feishu.cn/open-apis/bot/v2/hook/be86b9e1-c8a7-489a-a1c9-f01b9a3459ca';
+const FEISHU_WEBHOOK_URL = process.env.FEISHU_WEBHOOK || 'https://open.feishu.cn/open-apis/bot/v2/hook/be86b9e1-c8a7-489a-a1c9-f01b9a3459ca';
 
 // 构建飞书卡片消息
 function buildFeishuCard(publicResults, authResults) {

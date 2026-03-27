@@ -24,6 +24,13 @@ jobs:
         env:
           PANDA_EMAIL: ${{ secrets.PANDA_EMAIL }}
           PANDA_PASSWORD: ${{ secrets.PANDA_PASSWORD }}
+          FEISHU_WEBHOOK: ${{ secrets.STAGING_FEISHU_WEBHOOK }}
+          TARGET_PERFORMANCE: ${{ vars.TARGET_PERFORMANCE }}
+          TARGET_FCP: ${{ vars.TARGET_FCP }}
+          TARGET_LCP: ${{ vars.TARGET_LCP }}
+          TARGET_TBT: ${{ vars.TARGET_TBT }}
+          TARGET_CLS: ${{ vars.TARGET_CLS }}
+          TARGET_SI: ${{ vars.TARGET_SI }}
         run: node panda-auth-perf-api-login.js
 
   production-check:
@@ -44,4 +51,11 @@ jobs:
         env:
           FORTUNA_EMAIL: ${{ secrets.FORTUNA_EMAIL }}
           FORTUNA_PASSWORD: ${{ secrets.FORTUNA_PASSWORD }}
+          FEISHU_WEBHOOK: ${{ secrets.PROD_FEISHU_WEBHOOK }}
+          TARGET_PERFORMANCE: ${{ vars.TARGET_PERFORMANCE }}
+          TARGET_FCP: ${{ vars.TARGET_FCP }}
+          TARGET_LCP: ${{ vars.TARGET_LCP }}
+          TARGET_TBT: ${{ vars.TARGET_TBT }}
+          TARGET_CLS: ${{ vars.TARGET_CLS }}
+          TARGET_SI: ${{ vars.TARGET_SI }}
         run: node fortuna-perf-check.js
