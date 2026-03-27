@@ -409,76 +409,129 @@ function buildFeishuCard(publicResults, authResults) {
   ).length;
   const allPassRate = total > 0 ? Math.round(allPass / total * 100) : 0;
 
-  // 确定卡片颜色
   const headerColor = allPassRate >= 80 ? 'green' : allPassRate >= 50 ? 'orange' : 'red';
 
-  // 构建每个页面的结果行
-  function resultLine(r) {
-    if (r.error) return `❌ ${r.name}: ${r.error}`;
-    const perfIcon = r.performance >= TARGETS.performance ? '✅' : '❌';
-    return `${perfIcon} ${r.name} | P:${r.performance} | FCP:${(r.fcp/1000).toFixed(1)}s | LCP:${(r.lcp/1000).toFixed(1)}s | TBT:${r.tbt}ms | CLS:${r.cls.toFixed(2)} | SI:${(r.si/1000).toFixed(1)}s`;
-  }
+  // 构建表格列定义
+  const columns = [
+    { name: 'page', display_name: '页面', data_type: 'text', width: 'auto' },
+    { name: 'perf', display_name: 'Performance', data_type: 'text', width: 'auto' },
+    { name: 'fcp', display_name: 'FCP', data_type: 'text', width: 'auto' },
+    { name: 'lcp', display_name: 'LCP', data_type: 'text', width: 'auto' },
+    { name: 'tbt', display_name: 'TBT', data_type: 'text', width: 'auto' },
+    { name: 'cls', display_name: 'CLS', data_type: 'text', width: 'auto' },
+    { name: 'si', display_name: 'SI', data_type: 'text', width: 'auto' },
+    { name: 'pass', display_name: '达标', data_type: 'text', width: 'auto' }
+  ];
 
-  // 找出问题最严重的页面
-  const worstPerf = valid.length > 0 ? valid.reduce((a, b) => a.performance < b.performance ? a : b) : null;
-  const worstLcp = valid.length > 0 ? valid.reduce((a, b) => a.lcp > b.lcp ? a : b) : null;
+  // 构建表格行数据
+  function buildRow(r) {
+    if (r.error) {
+      return { page: r.name, perf: '❌ 错误', fcp: '-', lcp: '-', tbt: '-', cls: '-', si: '-', pass: '❌' };
+    }
+    const perfOk = r.performance >= TARGETS.performance;
+    const fcpOk = r.fcp < TARGETS.fcp;
+    const lcpOk = r.lcp < TARGETS.lcp;
+    const tbtOk = r.tbt < TARGETS.tbt;
+    const clsOk = r.cls < TARGETS.cls;
+    const siOk = r.si < TARGETS.si;
+    const allOk = perfOk && fcpOk && lcpOk && tbtOk && clsOk && siOk;
+    return {
+      page: r.name,
+      perf: `${r.performance} ${perfOk ? '✅' : '❌'}`,
+      fcp: `${(r.fcp / 1000).toFixed(1)}s ${fcpOk ? '✅' : '❌'}`,
+      lcp: `${(r.lcp / 1000).toFixed(1)}s ${lcpOk ? '✅' : '❌'}`,
+      tbt: `${r.tbt}ms ${tbtOk ? '✅' : '❌'}`,
+      cls: `${r.cls.toFixed(2)} ${clsOk ? '✅' : '❌'}`,
+      si: `${(r.si / 1000).toFixed(1)}s ${siOk ? '✅' : '❌'}`,
+      pass: allOk ? '✅' : '❌'
+    };
+  }
 
   const elements = [];
 
-  // 汇总统计
+  // 汇总信息
   elements.push({
     tag: 'div',
     text: {
       tag: 'lark_md',
-      content: `📊 **检测时间:** ${new Date().toLocaleString('zh-CN')}\n**策略:** 移动端 (Moto G4, 慢速4G)\n**检测页面:** ${all.length} 个 (公开 ${publicResults.length} + 需登录 ${authResults.length})${errors.length > 0 ? `\n**错误页面:** ${errors.length} 个` : ''}`
+      content: `📊 **检测时间:** ${new Date().toLocaleString('zh-CN')}\n**策略:** 移动端 (Moto G4, 慢速4G)\n**目标:** Performance≥${TARGETS.performance} | FCP<${TARGETS.fcp/1000}s | LCP<${TARGETS.lcp/1000}s | TBT<${TARGETS.tbt}ms | CLS<${TARGETS.cls} | SI<${TARGETS.si/1000}s`
     }
   });
 
   elements.push({ tag: 'hr' });
 
-  // 达标率统计
+  // 达标率统计表格
+  const statsColumns = [
+    { name: 'metric', display_name: '指标', data_type: 'text', width: 'auto' },
+    { name: 'pass_count', display_name: '达标', data_type: 'text', width: 'auto' },
+    { name: 'fail_count', display_name: '未达标', data_type: 'text', width: 'auto' },
+    { name: 'rate', display_name: '达标率', data_type: 'text', width: 'auto' }
+  ];
+  function statRate(pass) { return total > 0 ? Math.round(pass / total * 100) + '%' : '0%'; }
+  const statsRows = [
+    { metric: `Performance ≥ ${TARGETS.performance}`, pass_count: `${stats.performance}`, fail_count: `${total - stats.performance}`, rate: statRate(stats.performance) },
+    { metric: `FCP < ${TARGETS.fcp/1000}s`, pass_count: `${stats.fcp}`, fail_count: `${total - stats.fcp}`, rate: statRate(stats.fcp) },
+    { metric: `LCP < ${TARGETS.lcp/1000}s`, pass_count: `${stats.lcp}`, fail_count: `${total - stats.lcp}`, rate: statRate(stats.lcp) },
+    { metric: `TBT < ${TARGETS.tbt}ms`, pass_count: `${stats.tbt}`, fail_count: `${total - stats.tbt}`, rate: statRate(stats.tbt) },
+    { metric: `CLS < ${TARGETS.cls}`, pass_count: `${stats.cls}`, fail_count: `${total - stats.cls}`, rate: statRate(stats.cls) },
+    { metric: `SI < ${TARGETS.si/1000}s`, pass_count: `${stats.si}`, fail_count: `${total - stats.si}`, rate: statRate(stats.si) },
+    { metric: '🏆 全部达标', pass_count: `${allPass}`, fail_count: `${total - allPass}`, rate: `${allPassRate}%` }
+  ];
+
   elements.push({
     tag: 'div',
-    text: {
-      tag: 'lark_md',
-      content: [
-        `**📈 达标率统计**`,
-        `Performance ≥ ${TARGETS.performance}: ${stats.performance}/${total} (${total > 0 ? Math.round(stats.performance/total*100) : 0}%)`,
-        `FCP < ${TARGETS.fcp/1000}s: ${stats.fcp}/${total} (${total > 0 ? Math.round(stats.fcp/total*100) : 0}%)`,
-        `LCP < ${TARGETS.lcp/1000}s: ${stats.lcp}/${total} (${total > 0 ? Math.round(stats.lcp/total*100) : 0}%)`,
-        `TBT < ${TARGETS.tbt}ms: ${stats.tbt}/${total} (${total > 0 ? Math.round(stats.tbt/total*100) : 0}%)`,
-        `CLS < ${TARGETS.cls}: ${stats.cls}/${total} (${total > 0 ? Math.round(stats.cls/total*100) : 0}%)`,
-        `SI < ${TARGETS.si/1000}s: ${stats.si}/${total} (${total > 0 ? Math.round(stats.si/total*100) : 0}%)`,
-        `**全部达标: ${allPass}/${total} (${allPassRate}%)**`
-      ].join('\n')
-    }
+    text: { tag: 'lark_md', content: '**📈 达标率统计**' }
+  });
+  elements.push({
+    tag: 'table',
+    page_size: 10,
+    row_height: 'low',
+    header_style: { text_align: 'center', text_size: 'normal', background_style: 'grey', bold: true },
+    columns: statsColumns,
+    rows: statsRows.map(r => ({ cells: statsColumns.map(c => ({ text: r[c.name] })) }))
   });
 
   elements.push({ tag: 'hr' });
 
-  // 公开页面结果
-  const publicLines = publicResults.map(resultLine).join('\n');
+  // 公开页面表格
   elements.push({
     tag: 'div',
-    text: {
-      tag: 'lark_md',
-      content: `**📄 公开页面 (${publicResults.length}个)**\n${publicLines}`
-    }
+    text: { tag: 'lark_md', content: `**� 公开页面性能汇总 (${publicResults.length}个)**` }
+  });
+  elements.push({
+    tag: 'table',
+    page_size: 20,
+    row_height: 'low',
+    header_style: { text_align: 'center', text_size: 'normal', background_style: 'grey', bold: true },
+    columns: columns,
+    rows: publicResults.map(r => {
+      const row = buildRow(r);
+      return { cells: columns.map(c => ({ text: row[c.name] })) };
+    })
   });
 
   elements.push({ tag: 'hr' });
 
-  // 需登录页面结果
-  const authLines = authResults.map(resultLine).join('\n');
+  // 需登录页面表格
   elements.push({
     tag: 'div',
-    text: {
-      tag: 'lark_md',
-      content: `**🔒 需登录页面 (${authResults.length}个)**\n${authLines}`
-    }
+    text: { tag: 'lark_md', content: `**� 需登录页面性能汇总 (${authResults.length}个)**` }
+  });
+  elements.push({
+    tag: 'table',
+    page_size: 10,
+    row_height: 'low',
+    header_style: { text_align: 'center', text_size: 'normal', background_style: 'grey', bold: true },
+    columns: columns,
+    rows: authResults.map(r => {
+      const row = buildRow(r);
+      return { cells: columns.map(c => ({ text: row[c.name] })) };
+    })
   });
 
   // 关键问题
+  const worstPerf = valid.length > 0 ? valid.reduce((a, b) => a.performance < b.performance ? a : b) : null;
+  const worstLcp = valid.length > 0 ? valid.reduce((a, b) => a.lcp > b.lcp ? a : b) : null;
   const issues = [];
   if (worstPerf && worstPerf.performance < TARGETS.performance) {
     issues.push(`最低 Performance: ${worstPerf.name} (${worstPerf.performance}分)`);
@@ -492,6 +545,7 @@ function buildFeishuCard(publicResults, authResults) {
   if (tbtFails.length > 0) issues.push(`TBT 超标: ${tbtFails.length} 个页面`);
   const clsFails = valid.filter(r => r.cls >= TARGETS.cls);
   if (clsFails.length > 0) issues.push(`CLS 超标: ${clsFails.length} 个页面`);
+  if (errors.length > 0) issues.push(`错误页面: ${errors.map(r => r.name).join(', ')}`);
 
   if (issues.length > 0) {
     elements.push({ tag: 'hr' });
@@ -507,6 +561,7 @@ function buildFeishuCard(publicResults, authResults) {
   return {
     msg_type: 'interactive',
     card: {
+      config: { wide_screen_mode: true },
       header: {
         title: {
           tag: 'plain_text',
