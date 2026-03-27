@@ -2,30 +2,46 @@ name: Panda Performance Check
 
 on:
   schedule:
-    # 每天北京时间早上 9 点运行（UTC 1:00）
     - cron: '0 1 * * *'
   workflow_dispatch:
 
 jobs:
-  perf-check:
+  staging-check:
+    name: 预发布环境 (panda-scratch.com)
     runs-on: ubuntu-latest
     timeout-minutes: 60
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
-
       - name: Install dependencies
         run: npm ci || npm install
-
-      - name: Run performance check
+      - name: Run staging performance check
         env:
           PANDA_EMAIL: ${{ secrets.PANDA_EMAIL }}
           PANDA_PASSWORD: ${{ secrets.PANDA_PASSWORD }}
         run: node panda-auth-perf-api-login.js
+
+  production-check:
+    name: 正式环境 (fortuna.fast)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci || npm install
+      - name: Run production performance check
+        env:
+          FORTUNA_EMAIL: ${{ secrets.FORTUNA_EMAIL }}
+          FORTUNA_PASSWORD: ${{ secrets.FORTUNA_PASSWORD }}
+        run: node fortuna-perf-check.js
