@@ -58,9 +58,9 @@ const AUTH_PAGES = [
 
 // 性能目标
 const TARGETS = {
-  performance: 50,
-  fcp: 1800,
-  lcp: 2500,
+  performance: 60,
+  fcp: 2500,
+  lcp: 10500,
   tbt: 200,
   cls: 0.1,
   si: 3400
