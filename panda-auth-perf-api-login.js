@@ -386,7 +386,7 @@ function formatReport(publicResults, authResults) {
 }
 
 // 飞书 Webhook 配置
-const FEISHU_WEBHOOK_URL = 'https://open.feishu.cn/open-apis/bot/v2/hook/a9764473-129e-4cdc-95e2-4f20ce7dc218';
+const FEISHU_WEBHOOK_URL = 'https://open.feishu.cn/open-apis/bot/v2/hook/be86b9e1-c8a7-489a-a1c9-f01b9a3459ca';
 
 // 构建飞书卡片消息
 function buildFeishuCard(publicResults, authResults) {
